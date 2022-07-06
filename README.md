@@ -1,6 +1,19 @@
 # Loan-Payment-Tracker
 Python scripts to track loan payments and build a loan amortization table.
 
+### Requirements
+
+Conda
+```bash
+conda env create -f environment.yml
+```
+
+PIP
+```bash
+pip install requirements.txt
+
+```
+
 ---
 
 Build Amortization Table
