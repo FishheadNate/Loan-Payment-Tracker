@@ -11,6 +11,7 @@ import numpy_financial as npf
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import pprint
 
 logging.basicConfig(format='%(message)s', level=logging.INFO)
 logger = logging.getLogger()
@@ -26,6 +27,9 @@ def run(args):
 
     amortization_json = calculate_amortization(origination_date, loan_amount, interest_rate_annual, term_length_months)
 
+    if args.balloon_month:
+        apply_balloon_payment(amortization_json, args.balloon_month)
+
     output = 'Amortization-Table-' + str(term_length_months) + 'months.csv'
     logging.info('Exporting table to: ' + output)
     export_amortization_csv(amortization_json, interest_rate_annual, output)
@@ -36,9 +40,11 @@ def export_amortization_csv(amortization_json, interest_rate_annual, output):
     with open(output, 'w', newline='') as dst_file:
         fieldnames = [
             'Payment Number',
-            'Due Date',
-            'Starting Balance',
-            'Total Due',
+            'Payment Date',
+            'Beginning Balance',
+            'Scheduled Payment',
+            'Extra Payment',
+            'Total Payment',
             'Principal',
             interest_col,
             'Ending Balance'
@@ -46,15 +52,41 @@ def export_amortization_csv(amortization_json, interest_rate_annual, output):
         writer = csv.DictWriter(dst_file, fieldnames=fieldnames)
         writer.writeheader()
         for i in list(amortization_json.keys()):
+            if amortization_json[i]["Extra Payment"] is None:
+                extra_payment = 0
+                total_payment = amortization_json[i]["Amount Due"]
+            else:
+                extra_payment = amortization_json[i]["Extra Payment"]
+                total_payment = amortization_json[i]["Amount Due"] + extra_payment
             writer.writerow({
                 "Payment Number": i,
-                "Due Date": amortization_json[i]["Due Date"],
-                "Starting Balance": "${:,.2f}".format(amortization_json[i]["Start Balance"]),
-                "Total Due": "${:,.2f}".format(amortization_json[i]["Amount Due"]),
+                "Payment Date": amortization_json[i]["Due Date"],
+                "Beginning Balance": "${:,.2f}".format(amortization_json[i]["Start Balance"]),
+                "Scheduled Payment": "${:,.2f}".format(amortization_json[i]["Amount Due"]),
+                "Extra Payment": "${:,.2f}".format(extra_payment),
+                "Total Payment": "${:,.2f}".format(total_payment),
                 "Principal": "${:,.2f}".format(amortization_json[i]["Principal Due"]),
                 interest_col: "${:,.2f}".format(amortization_json[i]["Interest Due"]),
                 "Ending Balance": "${:,.2f}".format(amortization_json[i]["End Balance"])
             })
+
+
+def apply_balloon_payment(amortization_json, balloon_month):
+    logging.info('Adding balloon payment on payment number: ' + str(balloon_month))
+    for m in list(amortization_json.keys()):
+        if m < balloon_month:
+            amortization_json[m]["Extra Payment"] = 0
+        elif m == balloon_month:
+            pprint.pprint(amortization_json[m])
+            start_balance = amortization_json[m - 1]["Start Balance"]
+            current_interest = amortization_json[m]["Interest Due"]
+            extra_payment = start_balance + current_interest
+            end_balance = start_balance - extra_payment
+
+            amortization_json[m]["Extra Payment"] = round(extra_payment, 2)
+            amortization_json[m]["End Balance"] = round(end_balance, 2)
+        else:
+            amortization_json[m]["Extra Payment"] = 0
 
 
 def calculate_amortization(origination_date, loan_amount, interest_rate_annual, term_length_months):
@@ -84,6 +116,8 @@ def calculate_amortization(origination_date, loan_amount, interest_rate_annual, 
             ("Start Balance", start_balance),
             ("Due Date", due_dates[term_month - 1]),
             ("Amount Due", amount_due),
+            ("Extra Payment", None),
+            ("Total Payment", None),
             ("Principal Due", principal_due),
             ("Interest Due", interest_due),
             ("End Balance", None)
@@ -135,6 +169,7 @@ def main():
     parser.add_argument('-interest', help='Annual interest rate (X.XX)', dest='interest', type=float, required=True)
     parser.add_argument('-length', help='Term length of the loan in months', dest='length', type=int, required=True)
     parser.add_argument('-origin_date', help='Loan origination date (MM-DD-YYYY)', dest='origination_date', required=True)
+    parser.add_argument('-balloon_month', help='Term month on which to apply a balloon payment', dest='balloon_month', type=int, required=False)
     parser.set_defaults(func=run)
     args = parser.parse_args()
     args.func(args)
