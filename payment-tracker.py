@@ -7,6 +7,7 @@
 import argparse
 import csv
 import logging
+import re
 from collections import OrderedDict
 from datetime import datetime
 from re import sub
@@ -130,12 +131,16 @@ def payment_number(record_of_payments):
 def read_amortization_table(amortization_table):
     amortization_data = OrderedDict()
     for row in amortization_table:
+        for k in list(row.keys()):
+            if k.startswith('Interest'):
+                interest_column = k
+
         amortization_data[int(row["Payment Number"])] = OrderedDict([
             ("Due Date", datetime.strptime(row["Payment Date"], '%B %d, %Y')),
             ("Starting Balance", float(sub(r'[^\d.]', '', row["Beginning Balance"]))),
             ("Amount Due", float(sub(r'[^\d.]', '', row["Scheduled Payment"]))),
             ("Principal", float(sub(r'[^\d.]', '', row["Principal"]))),
-            ("Interest", float(sub(r'[^\d.]', '', row["Interest (5.0% APR)"]))),
+            ("Interest", float(sub(r'[^\d.]', '', row[interest_column]))),
             ("Ending Balance", float(sub(r'[^\d.]', '', row["Ending Balance"])))
         ])
 
