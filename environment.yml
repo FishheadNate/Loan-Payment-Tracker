@@ -1,0 +1,33 @@
+name: Loan-Payment-Tracker
+channels:
+  - defaults
+dependencies:
+  - bzip2=1.0.8=h1de35cc_0
+  - ca-certificates=2022.4.26=hecd8cb5_0
+  - certifi=2022.6.15=py310hecd8cb5_0
+  - freetype=2.11.0=hd8bbffd_0
+  - giflib=5.2.1=haf1e3a3_0
+  - jpeg=9e=hca72f7f_0
+  - lcms2=2.12=hf1fd2bf_0
+  - libcxx=12.0.0=h2f01273_0
+  - libffi=3.3=hb1e8313_2
+  - libpng=1.6.37=ha441bb4_0
+  - libtiff=4.2.0=hdb42f99_1
+  - libwebp=1.2.2=h56c3ce4_0
+  - libwebp-base=1.2.2=hca72f7f_0
+  - lz4-c=1.9.3=h23ab428_1
+  - ncurses=6.3=hca72f7f_3
+  - openssl=1.1.1p=hca72f7f_0
+  - pillow=9.0.1=py310hde71d04_0
+  - pip=21.2.4=py310hecd8cb5_0
+  - python=3.10.4=hdfd78df_0
+  - readline=8.1.2=hca72f7f_1
+  - reportlab=3.5.67=py310hee9066c_1
+  - setuptools=61.2.0=py310hecd8cb5_0
+  - sqlite=3.38.5=h707629a_0
+  - tk=8.6.12=h5d9f67b_0
+  - tzdata=2022a=hda174b7_0
+  - wheel=0.37.1=pyhd3eb1b0_0
+  - xz=5.2.5=hca72f7f_1
+  - zlib=1.2.12=h4dc903c_2
+  - zstd=1.5.2=hcb37349_0

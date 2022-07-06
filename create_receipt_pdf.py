@@ -32,6 +32,11 @@ def receipt_template(run_date, payment_json, output_page_size):
         (points from left, points from bottom)
         1 point = 1/72 inch
     '''
+    if os.path.exists('receipts'):
+        pass
+    else:
+        os.makedirs('receipts')
+
     receipt_output = 'receipts/payment_' + run_date +'.pdf'
     canvas = Canvas(receipt_output, pagesize=output_page_size)
 
@@ -206,10 +211,6 @@ def receipt_template(run_date, payment_json, output_page_size):
     canvas.setLineWidth(0.5)
     canvas.line(36, header_height - 6, 576, header_height - 6)
     canvas.line(36, header_height + 14, 576, header_height + 14)
-
-
-
-
 
     canvas.save()
 

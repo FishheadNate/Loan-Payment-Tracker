@@ -72,21 +72,29 @@ def export_amortization_csv(amortization_json, interest_rate_annual, output):
 
 
 def apply_balloon_payment(amortization_json, balloon_month):
-    logging.info('Adding balloon payment on payment number: ' + str(balloon_month))
+    logging.info('Applying a balloon payment to term month number: ' + str(balloon_month))
     for m in list(amortization_json.keys()):
         if m < balloon_month:
             amortization_json[m]["Extra Payment"] = 0
         elif m == balloon_month:
-            pprint.pprint(amortization_json[m])
             start_balance = amortization_json[m - 1]["Start Balance"]
             current_interest = amortization_json[m]["Interest Due"]
-            extra_payment = start_balance + current_interest
-            end_balance = start_balance - extra_payment
+            current_payment_due = amortization_json[m]["Amount Due"]
+
+            payoff_amount = start_balance + current_interest
+            extra_payment = payoff_amount - current_payment_due
+            end_balance = payoff_amount - current_payment_due - extra_payment
 
             amortization_json[m]["Extra Payment"] = round(extra_payment, 2)
             amortization_json[m]["End Balance"] = round(end_balance, 2)
         else:
+            amortization_json[m]["Start Balance"] = 0
+            amortization_json[m]["Amount Due"] = 0
             amortization_json[m]["Extra Payment"] = 0
+            amortization_json[m]["Total Payment"] = 0
+            amortization_json[m]["Principal Due"] = 0
+            amortization_json[m]["Interest Due"] = 0
+            amortization_json[m]["End Balance"] = 0
 
 
 def calculate_amortization(origination_date, loan_amount, interest_rate_annual, term_length_months):
@@ -165,11 +173,11 @@ def list_due_dates(start_date, end_date):
 
 def main():
     parser = argparse.ArgumentParser(description='Tracks loan payments and exports a receipt')
-    parser.add_argument('-amount', help='Total loan amount (XXXXX.XX)', dest='amount', type=float, required=True)
-    parser.add_argument('-interest', help='Annual interest rate (X.XX)', dest='interest', type=float, required=True)
-    parser.add_argument('-length', help='Term length of the loan in months', dest='length', type=int, required=True)
-    parser.add_argument('-origin_date', help='Loan origination date (MM-DD-YYYY)', dest='origination_date', required=True)
-    parser.add_argument('-balloon_month', help='Term month on which to apply a balloon payment', dest='balloon_month', type=int, required=False)
+    parser.add_argument('--amount', help='Total loan amount (XXXXX.XX)', dest='amount', type=float, required=True)
+    parser.add_argument('--interest', help='Annual interest rate (X.XX)', dest='interest', type=float, required=True)
+    parser.add_argument('--length', help='Term length of the loan in months', dest='length', type=int, required=True)
+    parser.add_argument('--origin_date', help='Loan origination date (MM-DD-YYYY)', dest='origination_date', required=True)
+    parser.add_argument('--balloon_month', help='Term month on which to apply a balloon payment', dest='balloon_month', type=int, required=False)
     parser.set_defaults(func=run)
     args = parser.parse_args()
     args.func(args)

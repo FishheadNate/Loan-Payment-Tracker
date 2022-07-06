@@ -1,0 +1,6 @@
+certifi==2022.6.15
+Pillow==9.0.1
+pip==21.2.4
+reportlab==3.5.67
+setuptools==61.2.0
+wheel==0.37.1

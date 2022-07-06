@@ -7,6 +7,7 @@
 import argparse
 import csv
 import logging
+import re
 from collections import OrderedDict
 from datetime import datetime
 from re import sub
@@ -16,12 +17,13 @@ import create_receipt_pdf
 logging.basicConfig(format='%(message)s', level=logging.INFO)
 logger = logging.getLogger()
 
-amortization_table = csv.DictReader(open('Amortization-Table.csv'))
-payments_csv = 'payments.csv'
-record_of_payments = csv.DictReader(open(payments_csv))
-
 
 def run(args):
+    date_format = '%m-%d-%Y'
+    amortization_table = csv.DictReader(open(args.amortization))
+    payments_csv = 'payments.csv'
+    record_of_payments = csv.DictReader(open(payments_csv))
+
     payment = OrderedDict([
         ("Payment Number", payment_number(record_of_payments)),
         ("Received Amount", args.collected),
@@ -129,12 +131,16 @@ def payment_number(record_of_payments):
 def read_amortization_table(amortization_table):
     amortization_data = OrderedDict()
     for row in amortization_table:
+        for k in list(row.keys()):
+            if k.startswith('Interest'):
+                interest_column = k
+
         amortization_data[int(row["Payment Number"])] = OrderedDict([
-            ("Due Date", datetime.strptime(row["Due Date"], '%B %d, %Y')),
-            ("Starting Balance", float(sub(r'[^\d.]', '', row["Starting Balance"]))),
-            ("Amount Due", float(sub(r'[^\d.]', '', row["Amount Due"]))),
+            ("Due Date", datetime.strptime(row["Payment Date"], '%B %d, %Y')),
+            ("Starting Balance", float(sub(r'[^\d.]', '', row["Beginning Balance"]))),
+            ("Amount Due", float(sub(r'[^\d.]', '', row["Scheduled Payment"]))),
             ("Principal", float(sub(r'[^\d.]', '', row["Principal"]))),
-            ("Interest", float(sub(r'[^\d.]', '', row["Interest"]))),
+            ("Interest", float(sub(r'[^\d.]', '', row[interest_column]))),
             ("Ending Balance", float(sub(r'[^\d.]', '', row["Ending Balance"])))
         ])
 
@@ -143,10 +149,11 @@ def read_amortization_table(amortization_table):
 
 def main():
     parser = argparse.ArgumentParser(description='Tracks loan payments and exports a receipt')
-    parser.add_argument('-payment', help='Payment amount received', dest='collected', type=float, required=True)
-    parser.add_argument('-date', help='Date of payment (MM-DD-YYYY HH:MMPM)', dest='collected_date', required=True)
-    parser.add_argument('-check_numb', help='Check Number or Payment type (ACH, Cash)', dest='check_num', type=int, required=True)
-    parser.add_argument('-notes', help='Payment notes', dest='notes', default='', required=True)
+    parser.add_argument('--amortization_table', help='File path to amortization table', dest='amortization', required=True)
+    parser.add_argument('--payment', help='Payment amount received', dest='collected', type=float, required=True)
+    parser.add_argument('--date', help='Date of payment (MM-DD-YYYY HH:MMPM)', dest='collected_date', required=True)
+    parser.add_argument('--check_numb', help='Check Number or Payment type (ACH, Cash)', dest='check_num', type=int, required=True)
+    parser.add_argument('--notes', help='Payment notes', dest='notes', default='', required=True)
     parser.set_defaults(func=run)
     args = parser.parse_args()
     args.func(args)
